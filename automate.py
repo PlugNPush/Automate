@@ -68,6 +68,23 @@ def ecriture_automate_sur_fichier():
 
     fichier.write(automate)
     fichier.close()
+    print("Ecriture finis !")
+
+def est_un_automate_assynchrone():
+    i=0
+    asynchrone=False
+    global ASYNCHRONES
+    ASYNCHRONES=[]
+    while (i<NB_TRANSITIONS):
+        if (TRANSITIONS[i].find("*")):
+            asynchrone=True
+            ASYNCHRONES.append(TRANSITIONS[i])
+        i+=1
+    if ASYNCHRONES:
+        print(ASYNCHRONES)
+    return(asynchrone)
+
+#def elimination epsilon():
 
 ##### main #####
 
@@ -75,10 +92,16 @@ def ecriture_automate_sur_fichier():
 print("Start !\n")
 fic = fichier.read()
 fichier.close()
-print (fic+'\n')
+print (fic)
 
 lire_automate_sur_fichier(fic)
 print('\n')
 #afficher_automate()
 
 ecriture_automate_sur_fichier()
+print(est_un_automate_assynchrone())
+
+if not ASYNCHRONES:
+    bus = []
+    transit_epsilon = []
+    print(INITIAL_STATE)
