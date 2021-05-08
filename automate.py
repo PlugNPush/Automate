@@ -1,5 +1,6 @@
 # coding: utf-8
 import re
+ASYNCHRONES=[]
 
 fichier = open("Automates/B4-32.txt", "r")
 
@@ -8,7 +9,6 @@ def lire_automate_sur_fichier(fic):
     split = fic.split()
     print(split)
 
-    global NB_INITIAL_STATE, INITIAL_STATE, NB_FINAL_STATE, FINAL_STATE, NB_TRANSITIONS, TRANSITIONS, ETATS, LIBELLES
     i=0
     split_initial=split[i].split(':')
     NB_INITIAL_STATE=int(split_initial[1])
@@ -38,8 +38,8 @@ def lire_automate_sur_fichier(fic):
     ETATS=[]
     while (i < NB_INITIAL_STATE+NB_FINAL_STATE+NB_TRANSITIONS+2):
         transition = split[i+1]
-        transition_libelle=re.split('\d+', transition)[1] # ['','a','']
-        transition_etats=re.split('\D+', transition) # ['1','2']
+        transition_libelle=re.split(r'\d+', transition)[1] # ['','a','']
+        transition_etats=re.split(r'\D+', transition) # ['1','2']
         TRANSITIONS.append(transition)
         if transition_libelle not in LIBELLES:
             LIBELLES.append(transition_libelle)
@@ -50,34 +50,44 @@ def lire_automate_sur_fichier(fic):
         i+=1
     print(TRANSITIONS)
     print('etats :',ETATS,'\nlibelles :',LIBELLES)
+    return NB_INITIAL_STATE,INITIAL_STATE,NB_FINAL_STATE,FINAL_STATE,NB_TRANSITIONS,TRANSITIONS,ETATS,LIBELLES
 
-def maj_libelles():
+
+def maj_libelles(LIBELLES):
     for trans in TRANSITIONS: # ajout des nouveaux libelles
-        split_libelle = re.split('\d+', trans)[1]
+        split_libelle = re.split(r'\d+', trans)[1]
         if split_libelle not in LIBELLES:
             LIBELLES.append(split_libelle) 
     for lib in LIBELLES: # suppression des anciens libelles
         present=False
-        while i in range(0,len(TRANSITIONS)) and present==False:
+        i=0
+        while i <len(TRANSITIONS) and present==False:
             if lib in TRANSITIONS[i]:
                 present=True
+            i+=1
         if not present:
             LIBELLES.remove(lib)
+    print("maj_libelles:",LIBELLES)
+    return LIBELLES
 
-def maj_etats():
+def maj_etats(ETATS):
     for trans in TRANSITIONS: # ajout des nouveaux etats
-        split_etats = re.split('\D+', trans)
+        split_etats = re.split(r'\D+', trans)
         if split_etats[0] not in ETATS:
             ETATS.append(split_etats[0])
         if split_etats[1] not in ETATS:
             ETATS.append(split_etats[1])
     for lib in ETATS: # suppression des anciens etats
         present=False
-        while i in range(0,len(TRANSITIONS)) and present==False:
+        i=0
+        while i <len(TRANSITIONS) and present==False:
             if lib not in TRANSITIONS[i]:
                 present=True
+        i+=1
         if not present:
             ETATS.remove(lib)
+    print("maj_etats:",ETATS)
+    return ETATS
 
 def afficher_automate():
     automate = 'INITIAL_STATE:'+str(NB_INITIAL_STATE)+'\n'
@@ -110,10 +120,10 @@ def ecriture_automate_sur_fichier():
     print("Ecriture finis !")
 
 def est_un_automate_assynchrone():
+    global ASYNCHRONES
     i=0
     asynchrone=False
-    global ASYNCHRONES
-    ASYNCHRONES=[]
+    #ASYNCHRONES=[]
     while (i<NB_TRANSITIONS):
         if (TRANSITIONS[i].find('*') >= 0):
             asynchrone=True
@@ -121,26 +131,13 @@ def est_un_automate_assynchrone():
         i+=1
     if ASYNCHRONES:
         print('ASYNCHRONES :', ASYNCHRONES)
-    return(asynchrone)
+    return asynchrone
 
-#def elimination_epsilon():
+def complément():
+    new_complement=[]
 
-##### main #####
-
-# fic
-print("Start !\n")
-fic = fichier.read()
-fichier.close()
-print (fic)
-
-lire_automate_sur_fichier(fic)
-print('\n')
-#afficher_automate()
-
-print(est_un_automate_assynchrone())
-
-if ASYNCHRONES: # elimination_epsilon #TODO: 21 dans INIT à supprimer si pas de transition sortante et état final
-    print('start :', ASYNCHRONES) #TODO: FINAL_STATE
+def elimination_epsilon(NB_INITIAL_STATE,INITIAL_STATE,NB_FINAL_STATE,FINAL_STATE,NB_TRANSITIONS,TRANSITIONS,ASYNCHRONES):
+    print('start :', ASYNCHRONES) #TODO: FINAL_STATE, INITIAL_STATE
     while ASYNCHRONES:
 
         split_epsilon = ASYNCHRONES[0].split('*') # une transition vers un 'enfant'
@@ -153,7 +150,7 @@ if ASYNCHRONES: # elimination_epsilon #TODO: 21 dans INIT à supprimer si pas de
             INITIAL_STATE.append(split_epsilon[2])
             NB_INITIAL_STATE+=1
         for i in TRANSITIONS: # recherche des 'petit-enfants'
-            if i != ASYNCHRONES[0] and split_epsilon[2] == re.split('\D+', i)[0]:
+            if i != ASYNCHRONES[0] and split_epsilon[2] == re.split(r'\D+', i)[0]:
                 transit_epsilon.append(i)    
         print('split_epsilon :', split_epsilon,' transit_epsilon :', transit_epsilon)
         
@@ -161,13 +158,13 @@ if ASYNCHRONES: # elimination_epsilon #TODO: 21 dans INIT à supprimer si pas de
             nb_transition_enfant = 0
             #nb_transition_entrante = 0
             for j in TRANSITIONS :
-                if re.split('\D+', j)[1] == re.split('\D+', i)[0]:
+                if re.split(r'\D+', j)[1] == re.split(r'\D+', i)[0]:
                     nb_transition_enfant +=1
                 #if re.split('\D+', j)[1] == ASYNCHRONES[0].split('*')[1]:
                 #    nb_transition_entrante +=1
-            if i.find('*') != -1 and re.split('\D+', i)[0] in INITIAL_STATE and re.split('\D+', i)[1] not in INITIAL_STATE:
-                print("add init :", re.split('\D+', i)[1])
-                INITIAL_STATE.append(re.split('\D+', i)[1])
+            if i.find('*') != -1 and re.split(r'\D+', i)[0] in INITIAL_STATE and re.split(r'\D+', i)[1] not in INITIAL_STATE:
+                print("add init :", re.split(r'\D+', i)[1])
+                INITIAL_STATE.append(re.split(r'\D+', i)[1])
                 NB_INITIAL_STATE+=1
                 # for k in TRANSITIONS:
                 #   if re.split('\D+', k)[1] != ASYNCHRONES[0].split('*')[1]:
@@ -177,8 +174,8 @@ if ASYNCHRONES: # elimination_epsilon #TODO: 21 dans INIT à supprimer si pas de
                     print("remove init :", ASYNCHRONES[0].split('*')[1])
                     INITIAL_STATE.remove(ASYNCHRONES[0].split('*')[1])
                     NB_INITIAL_STATE-=1'''
-            split_epsilon[1]= re.split('\d+', i)[1]  # lettre ou * : ['','a','']  # 11*14 ou 21a2 (on ignore les chiffres)
-            split_epsilon[2]= re.split('\D+', i)[1]  # chiffre ['0','0'] (on supprime la lettre)
+            split_epsilon[1]= re.split(r'\d+', i)[1]  # lettre ou * : ['','a','']  # 11*14 ou 21a2 (on ignore les chiffres)
+            split_epsilon[2]= re.split(r'\D+', i)[1]  # chiffre ['0','0'] (on supprime la lettre)
             if split_epsilon[1]== '*':
                 ASYNCHRONES.append(''.join(split_epsilon))
                 #print('asynchrone append ',''.join(split_epsilon))
@@ -222,8 +219,9 @@ if ASYNCHRONES: # elimination_epsilon #TODO: 21 dans INIT à supprimer si pas de
         print('remove parent ', ASYNCHRONES[0], '\n')
         del ASYNCHRONES[0]
         #print(ASYNCHRONES)
+    return NB_INITIAL_STATE,INITIAL_STATE,NB_FINAL_STATE,FINAL_STATE,NB_TRANSITIONS,TRANSITIONS,ASYNCHRONES
         
-ecriture_automate_sur_fichier()     
+   
             
     # while ASYNCHRONES :
     #   split_epsilon = ASYNCHRONES[0].strip('*') ##0
@@ -243,6 +241,29 @@ ecriture_automate_sur_fichier()
     #   ASYNCHRONES[0].remove() ##0->1
     # 
 
+#def complement():
+
+
+##### main #####
+
+# fic
+print("Start !\n")
+fic = fichier.read()
+fichier.close()
+print (fic)
+
+NB_INITIAL_STATE,INITIAL_STATE,NB_FINAL_STATE,FINAL_STATE,NB_TRANSITIONS,TRANSITIONS,ETATS,LIBELLES = lire_automate_sur_fichier(fic)
+print('\n')
+
+#afficher_automate()
+
+print(est_un_automate_assynchrone())
+
+if ASYNCHRONES: # elimination_epsilon #TODO: 21 dans INIT à supprimer si pas de transition sortante et état final
+    NB_INITIAL_STATE,INITIAL_STATE,NB_FINAL_STATE,FINAL_STATE,NB_TRANSITIONS,TRANSITIONS,ASYNCHRONES = elimination_epsilon(NB_INITIAL_STATE,INITIAL_STATE,NB_FINAL_STATE,FINAL_STATE,NB_TRANSITIONS,TRANSITIONS,ASYNCHRONES)
+
+ecriture_automate_sur_fichier()
+print("\n\nVIE !!!!!!!!!!!\ninit: ", NB_INITIAL_STATE,"\n",INITIAL_STATE,"\nfinal: ",NB_FINAL_STATE,"\n",FINAL_STATE,"\ntransit: ",NB_TRANSITIONS,"\n",TRANSITIONS,"\nasynchrone: ",ASYNCHRONES,"\n")
 
 # determinisation_et_completion_asynchrone :
 #   elimination epsilon puis deter/complet synchrone
