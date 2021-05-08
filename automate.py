@@ -2,7 +2,7 @@
 import re
 ASYNCHRONES=[]
 
-fichier = open("Automates/B4-20.txt", "r")
+fichier = open("Automates/B4-33.txt", "r")
 
 
 def lire_automate_sur_fichier(fic):
@@ -133,11 +133,9 @@ def est_un_automate_assynchrone():
         print('ASYNCHRONES :', ASYNCHRONES)
     return asynchrone
 
-def complément():
-    new_complement=[]
 
 def elimination_epsilon():
-    global NB_TRANSITIONS,TRANSITIONS,ASYNCHRONES
+    global NB_FINAL_STATE,FINAL_STATE,NB_TRANSITIONS,TRANSITIONS,ASYNCHRONES
     print('start :', ASYNCHRONES) #TODO: FINAL_STATE, INITIAL_STATE
     while ASYNCHRONES:
         split_epsilon = ASYNCHRONES[0].split('*') # une transition vers un 'enfant'
@@ -149,6 +147,26 @@ def elimination_epsilon():
             if i != ASYNCHRONES[0] and split_epsilon[2] == re.split(r'\D+', i)[0]:
                 transit_epsilon.append(i)    
         print('split_epsilon :', split_epsilon,' transit_epsilon :', transit_epsilon)
+        ''' # oublie des transit_epsilon '*'
+        ajout_sortie=[]
+        for transit in transit_epsilon:
+            if re.split(r'\d+', transit)[1]=='*': # transmission sortie à 1 transition
+                ajout_sortie.append(transit)'''
+        if len(transit_epsilon)==0: #or len(ajout_sortie)==0 : # transmission sortie à 1 transition
+            if split_epsilon[0] not in FINAL_STATE and split_epsilon[2] in FINAL_STATE:
+                FINAL_STATE.append(split_epsilon[0])
+                NB_FINAL_STATE+=1
+                print("ajout sortie ",split_epsilon[0])
+            plusieurs_parents=False # virer la sortie de l'enfant
+            for trans in TRANSITIONS:
+                if split_epsilon[2] == re.split(r'\D+', trans)[1] and split_epsilon[0] != re.split(r'\D+', trans)[0]:
+                    plusieurs_parents=True
+            if not plusieurs_parents: # si enfant n'a qu'une seul transition précédente
+                print("enleve sortie ",split_epsilon[2])
+                if split_epsilon[2] in FINAL_STATE:
+                    FINAL_STATE.remove(split_epsilon[2])
+                    NB_FINAL_STATE-=1
+
         for i in transit_epsilon:
             nb_transition_enfant = 0
             for j in TRANSITIONS :
@@ -173,8 +191,25 @@ def elimination_epsilon():
             #print('split_epsilon fin :', ''.join(split_epsilon))
         #INI FIN
         TRANSITIONS.remove(ASYNCHRONES[0]) # remove de l'enfant
+        grand_parent=[]
+        for e in TRANSITIONS:
+            if re.split(r'\D+', e)[1] == ASYNCHRONES[0].split('*')[1]:
+                grand_parent.append(e)
+        # Supprimer un état sans famille autrefois relié à une sortie (il s'appelle Rémy)       
+        if ASYNCHRONES[0].split('*')[1] in FINAL_STATE and len(grand_parent) <= 0:
+            print("FORCE DELETE "+ ASYNCHRONES[0].split('*')[1])
+            if ASYNCHRONES[0].split('*')[1] in FINAL_STATE:
+                FINAL_STATE.remove(ASYNCHRONES[0].split('*')[1])
+                NB_FINAL_STATE-=1
+            # Après l'avoir complètement isolé, l'ascendance reprend le rôle de sortie   
+            if ASYNCHRONES[0].split('*')[0] not in FINAL_STATE:
+                FINAL_STATE.append(ASYNCHRONES[0].split('*')[0])
+                NB_FINAL_STATE+=1
+        # Ajouter une sortie à un état s'il est directement relié en ε à une autre sortie    
+        if ASYNCHRONES[0].split('*')[1] in FINAL_STATE and ASYNCHRONES[0].split('*')[0] not in FINAL_STATE:
+            FINAL_STATE.append(ASYNCHRONES[0].split('*')[0])
+            NB_FINAL_STATE+=1        
         NB_TRANSITIONS-=1
-        letest=False
         print('remove parent ', ASYNCHRONES[0], '\n')
         del ASYNCHRONES[0]
         #print(ASYNCHRONES)
@@ -208,7 +243,7 @@ def est_un_automate_complet():
     global LIBELLES
     TRANS_COPY = []
     for e in TRANSITIONS:
-        TRANS_COPY.append(re.split('\D+', e)[0] + re.split('\d+', e)[1])
+        TRANS_COPY.append(re.split(r'\D+', e)[0] + re.split(r'\d+', e)[1])
     print(TRANS_COPY)
     for st in ETATS:
         for le in LIBELLES:
@@ -227,7 +262,7 @@ def completion():
         needsJunk = False
         TRANS_COPY = []
         for e in TRANSITIONS:
-            TRANS_COPY.append(re.split('\D+', e)[0] + re.split('\d+', e)[1])
+            TRANS_COPY.append(re.split(r'\D+', e)[0] + re.split(r'\d+', e)[1])
         print(TRANS_COPY)
         for st in ETATS:
             for le in LIBELLES:
@@ -260,13 +295,13 @@ def automate_complementaire():
     NB_NOT_FINAL_STATE, NB_FINAL_STATE = NB_FINAL_STATE, NB_NOT_FINAL_STATE
     NOT_FINAL_STATE, FINAL_STATE = FINAL_STATE, NOT_FINAL_STATE
 
-
+'''
 completion()
 
 print(FINAL_STATE)
 automate_complementaire()
 print(FINAL_STATE)
-
+'''
 
 ecriture_automate_sur_fichier()
 print("\n\nVIE !!!!!!!!!!!\ninit: ", NB_INITIAL_STATE,"\n",INITIAL_STATE,"\nfinal: ",NB_FINAL_STATE,"\n",FINAL_STATE,"\ntransit: ",NB_TRANSITIONS,"\n",TRANSITIONS,"\nasynchrone: ",ASYNCHRONES,"\n")
