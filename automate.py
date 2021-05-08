@@ -2,7 +2,7 @@
 import re
 ASYNCHRONES=[]
 
-fichier = open("Automates/B4-32.txt", "r")
+fichier = open("Automates/B4-20.txt", "r")
 
 
 def lire_automate_sur_fichier(fic):
@@ -199,6 +199,74 @@ print(est_un_automate_assynchrone())
 
 if ASYNCHRONES: # elimination_epsilon #TODO: 21 dans INIT à supprimer si pas de transition sortante et état final
     elimination_epsilon()
+
+
+##### COMPLET ?
+def est_un_automate_complet():
+    global TRANSITIONS
+    global ETATS
+    global LIBELLES
+    TRANS_COPY = []
+    for e in TRANSITIONS:
+        TRANS_COPY.append(re.split('\D+', e)[0] + re.split('\d+', e)[1])
+    print(TRANS_COPY)
+    for st in ETATS:
+        for le in LIBELLES:
+            tr = st+le
+            if tr not in TRANS_COPY:
+                return False
+    return True
+
+##### COMPLETION
+def completion():
+    global NB_TRANSITIONS
+    global TRANSITIONS
+    global ETATS
+    global LIBELLES
+    if not est_un_automate_complet():
+        needsJunk = False
+        TRANS_COPY = []
+        for e in TRANSITIONS:
+            TRANS_COPY.append(re.split('\D+', e)[0] + re.split('\d+', e)[1])
+        print(TRANS_COPY)
+        for st in ETATS:
+            for le in LIBELLES:
+                tr = st+le
+                if tr not in TRANS_COPY:
+                    needsJunk = True
+                    TRANSITIONS.append(tr + "P")
+                    NB_TRANSITIONS += 1
+        if needsJunk:
+            ETATS.append('P')
+            for lettre in LIBELLES:
+                TRANSITIONS.append("P" + lettre + "P")
+                NB_TRANSITIONS+=1
+        print(LIBELLES)
+        print(ETATS)
+        print(TRANSITIONS)
+
+##### Complémentarisation
+def automate_complementaire():
+    global NOT_FINAL_STATE
+    global NB_NOT_FINAL_STATE
+    global FINAL_STATE
+    global NB_FINAL_STATE
+    NOT_FINAL_STATE = []
+    NB_NOT_FINAL_STATE = 0
+    for e in ETATS:
+        if e not in FINAL_STATE:
+            NOT_FINAL_STATE.append(e)
+            NB_NOT_FINAL_STATE += 1
+    NB_NOT_FINAL_STATE, NB_FINAL_STATE = NB_FINAL_STATE, NB_NOT_FINAL_STATE
+    NOT_FINAL_STATE, FINAL_STATE = FINAL_STATE, NOT_FINAL_STATE
+
+
+completion()
+
+print(FINAL_STATE)
+automate_complementaire()
+print(FINAL_STATE)
+
 
 ecriture_automate_sur_fichier()
 print("\n\nVIE !!!!!!!!!!!\ninit: ", NB_INITIAL_STATE,"\n",INITIAL_STATE,"\nfinal: ",NB_FINAL_STATE,"\n",FINAL_STATE,"\ntransit: ",NB_TRANSITIONS,"\n",TRANSITIONS,"\nasynchrone: ",ASYNCHRONES,"\n")
