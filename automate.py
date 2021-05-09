@@ -55,38 +55,22 @@ def lire_automate_sur_fichier(fic):
 
 def maj_libelles():
     global LIBELLES
+    LIBELLES = []
     for trans in TRANSITIONS: # ajout des nouveaux libelles
         split_libelle = re.split(r'\d+', trans)[1]
         if split_libelle not in LIBELLES:
             LIBELLES.append(split_libelle) 
-    for lib in LIBELLES: # suppression des anciens libelles
-        present=False
-        i=0
-        while i <len(TRANSITIONS) and present==False:
-            if lib in TRANSITIONS[i]:
-                present=True
-            i+=1
-        if not present:
-            LIBELLES.remove(lib)
     print("maj_libelles:",LIBELLES)
 
 def maj_etats():
     global ETATS
+    ETATS = []
     for trans in TRANSITIONS: # ajout des nouveaux etats
         split_etats = re.split(r'\D+', trans)
         if split_etats[0] not in ETATS:
             ETATS.append(split_etats[0])
         if split_etats[1] not in ETATS:
             ETATS.append(split_etats[1])
-    for lib in ETATS: # suppression des anciens etats
-        present=False
-        i=0
-        while i <len(TRANSITIONS) and present==False:
-            if lib not in TRANSITIONS[i]:
-                present=True
-        i+=1
-        if not present:
-            ETATS.remove(lib)
     print("maj_etats:",ETATS)
 
 def afficher_automate():
@@ -136,7 +120,7 @@ def est_un_automate_assynchrone():
 
 def elimination_epsilon():
     global NB_FINAL_STATE,FINAL_STATE,NB_TRANSITIONS,TRANSITIONS,ASYNCHRONES
-    print('start :', ASYNCHRONES) #TODO: FINAL_STATE, INITIAL_STATE
+    print('start :', ASYNCHRONES)
     while ASYNCHRONES:
         split_epsilon = ASYNCHRONES[0].split('*') # une transition vers un 'enfant'
         split_epsilon.insert(1, '*')
@@ -147,11 +131,6 @@ def elimination_epsilon():
             if i != ASYNCHRONES[0] and split_epsilon[2] == re.split(r'\D+', i)[0]:
                 transit_epsilon.append(i)    
         print('split_epsilon :', split_epsilon,' transit_epsilon :', transit_epsilon)
-        ''' # oublie des transit_epsilon '*'
-        ajout_sortie=[]
-        for transit in transit_epsilon:
-            if re.split(r'\d+', transit)[1]=='*': # transmission sortie à 1 transition
-                ajout_sortie.append(transit)'''
         if len(transit_epsilon)==0: #or len(ajout_sortie)==0 : # transmission sortie à 1 transition
             if split_epsilon[0] not in FINAL_STATE and split_epsilon[2] in FINAL_STATE:
                 FINAL_STATE.append(split_epsilon[0])
@@ -213,8 +192,15 @@ def elimination_epsilon():
         print('remove parent ', ASYNCHRONES[0], '\n')
         del ASYNCHRONES[0]
         #print(ASYNCHRONES)
+    maj_libelles()
+    maj_etats()
 
-#def complement():
+def determinisation_synchrone():
+    new_transitions=[]
+    new_initial=[]
+    new_final=[]
+    # fusion des entrées et de leurs transitions
+    # ajout des transitions comme nouvel état
 
 
 ##### main #####
@@ -232,7 +218,7 @@ print('\n')
 
 print(est_un_automate_assynchrone())
 
-if ASYNCHRONES: # elimination_epsilon #TODO: 21 dans INIT à supprimer si pas de transition sortante et état final
+if ASYNCHRONES: # elimination_epsilon
     elimination_epsilon()
 
 
@@ -302,6 +288,7 @@ print(FINAL_STATE)
 automate_complementaire()
 print(FINAL_STATE)
 '''
+determinisation_synchrone()
 
 ecriture_automate_sur_fichier()
 print("\n\nVIE !!!!!!!!!!!\ninit: ", NB_INITIAL_STATE,"\n",INITIAL_STATE,"\nfinal: ",NB_FINAL_STATE,"\n",FINAL_STATE,"\ntransit: ",NB_TRANSITIONS,"\n",TRANSITIONS,"\nasynchrone: ",ASYNCHRONES,"\n")
