@@ -2,7 +2,7 @@
 import re
 ASYNCHRONES=[]
 
-fichier = open("Automates/B4-33.txt", "r")
+fichier = open("Automates/B4-21.txt", "r")
 
 
 def lire_automate_sur_fichier(fic):
@@ -196,31 +196,77 @@ def elimination_epsilon():
     maj_etats()
 
 def determinisation_synchrone():
+    global NB_INITIAL_STATE,INITIAL_STATE
     new_transitions=[]
-    new_initial=[]
     new_final=[]
+    new_etats=[]
+    new_libelles=[]
+    new_enter=","
+    for enter in INITIAL_STATE:
+        new_enter += enter + ","
+    new_etats.append(new_enter)
+    INITIAL_STATE=[new_enter]
+    NB_INITIAL_STATE=1
+    # a placer dans une boucle
+    for tr in TRANSITIONS:
+        if ("," + re.split(r'\D+', tr)[0] + ",") in new_enter:
+            if  re.split(r'\d+', tr)[1] not in new_libelles:
+                new_libelles.append(re.split(r'\d+', tr)[1])
+                liste_lib = {
+                    re.split(r'\d+', tr)[1] : [re.split(r'\D+', tr)[1]]
+                }
+            else:
+                liste_lib[re.split(r'\d+', tr)[1]].append(re.split(r'\D+', tr)[1])
+    for keyll in liste_lib:
+        new_suite=","
+        for e in liste_lib[keyll]:
+            new_suite += e + ","
+        new_transitions.append(new_enter+keyll+new_suite)
+        new_etats.append(new_suite)
     # fusion des entrées et de leurs transitions
     # ajout des transitions comme nouvel état
+    # transmission des sorties (si dans les nouveaux états il y a un ancien comme sortie)
+    # 
 
-
-##### main #####
-
-# fic
-print("Start !\n")
-fic = fichier.read()
-fichier.close()
-print (fic)
-
-NB_INITIAL_STATE,INITIAL_STATE,NB_FINAL_STATE,FINAL_STATE,NB_TRANSITIONS,TRANSITIONS,ETATS,LIBELLES = lire_automate_sur_fichier(fic)
-print('\n')
-
-#afficher_automate()
-
-print(est_un_automate_assynchrone())
-
-if ASYNCHRONES: # elimination_epsilon
-    elimination_epsilon()
-
+def standardisation(): # penser à mettre à jour ETATS avant !
+    global NB_INITIAL_STATE,INITIAL_STATE,NB_FINAL_STATE,FINAL_STATE,NB_TRANSITIONS,TRANSITIONS
+    if not est_un_automate_standard():
+        enter=0
+        while enter < len(INITIAL_STATE):
+            transition_arrivantes=[]
+            transition_sortantes=[]
+            for i in TRANSITIONS: 
+                if re.split(r'\D+', i)[1] == INITIAL_STATE[enter]:
+                    transition_arrivantes.append(i)
+                if re.split(r'\D+', i)[0] == INITIAL_STATE[enter]:
+                    transition_sortantes.append(i)
+            if len(transition_arrivantes)!=0:
+                if 'I' not in ETATS: # verif pas nécessaire si testé au préalable
+                    INITIAL_STATE.append('I')
+                    NB_INITIAL_STATE+=1
+                if INITIAL_STATE[enter] in FINAL_STATE and 'I' not in FINAL_STATE:
+                    FINAL_STATE.append('I')
+                    NB_FINAL_STATE+=1
+                INITIAL_STATE.remove(INITIAL_STATE[enter])
+                NB_INITIAL_STATE-=1
+                enter-=1 # pas d'augmentation de enter à cause du remove
+                for exite in transition_sortantes: # ajouter les transitions 'I..' + transition_sortante[1,2]
+                    new_transition= 'I'+ re.split(r'\d+', exite)[1] + re.split(r'\D+', exite)[1]
+                    print('new_transition :',new_transition)
+                    TRANSITIONS.append(new_transition)
+                    NB_TRANSITIONS+=1
+            enter+=1
+        print('\nStandardisation :\n',TRANSITIONS)
+    else:
+        print("\nL'automate est déjà standardisé !\n")
+    
+def est_un_automate_standard():
+    global TRANSITIONS, INITIAL_STATE
+    for i in TRANSITIONS:
+        for e in INITIAL_STATE:
+            if re.split(r'\D+', i)[1] == e:
+                return False
+    return True            
 
 ##### COMPLET ?
 def est_un_automate_complet():
@@ -281,6 +327,29 @@ def automate_complementaire():
     NB_NOT_FINAL_STATE, NB_FINAL_STATE = NB_FINAL_STATE, NB_NOT_FINAL_STATE
     NOT_FINAL_STATE, FINAL_STATE = FINAL_STATE, NOT_FINAL_STATE
 
+##### main #####
+
+##### init #####
+# fic
+print("Start !\n")
+fic = fichier.read()
+fichier.close()
+print (fic)
+
+NB_INITIAL_STATE,INITIAL_STATE,NB_FINAL_STATE,FINAL_STATE,NB_TRANSITIONS,TRANSITIONS,ETATS,LIBELLES = lire_automate_sur_fichier(fic)
+print('\n')
+
+##### body #####
+print("STANDARD:", est_un_automate_standard())
+standardisation()
+print("STANDARD APRÈS STANDARDISATION: ", est_un_automate_standard())
+#afficher_automate()
+
+print(est_un_automate_assynchrone())
+
+if ASYNCHRONES: # elimination_epsilon
+    elimination_epsilon()
+
 '''
 completion()
 
@@ -288,7 +357,7 @@ print(FINAL_STATE)
 automate_complementaire()
 print(FINAL_STATE)
 '''
-determinisation_synchrone()
+# determinisation_synchrone()
 
 ecriture_automate_sur_fichier()
 print("\n\nVIE !!!!!!!!!!!\ninit: ", NB_INITIAL_STATE,"\n",INITIAL_STATE,"\nfinal: ",NB_FINAL_STATE,"\n",FINAL_STATE,"\ntransit: ",NB_TRANSITIONS,"\n",TRANSITIONS,"\nasynchrone: ",ASYNCHRONES,"\n")
