@@ -2,7 +2,7 @@
 import re
 ASYNCHRONES=[]
 
-fichier = open("Automates/B4-21.txt", "r")
+fichier = open("Automates/B4-2.txt", "r")
 
 
 def lire_automate_sur_fichier(fic):
@@ -87,7 +87,7 @@ def afficher_automate():
     print(automate)
 
 def ecriture_automate_sur_fichier():
-    fichier = open("Automate.txt", "w")
+    fichier = open("Trace/B4-trace2.txt", "w")
 
     automate = 'INITIAL_STATE:'+str(NB_INITIAL_STATE)+'\n'
     for i in range(0,NB_INITIAL_STATE):
@@ -174,7 +174,7 @@ def elimination_epsilon():
         for e in TRANSITIONS:
             if re.split(r'\D+', e)[1] == ASYNCHRONES[0].split('*')[1]:
                 grand_parent.append(e)
-        # Supprimer un état sans famille autrefois relié à une sortie (il s'appelle Rémy)       
+        # Supprimer un état sans famille autrefois relié à une sortie  
         if ASYNCHRONES[0].split('*')[1] in FINAL_STATE and len(grand_parent) <= 0:
             print("FORCE DELETE "+ ASYNCHRONES[0].split('*')[1])
             if ASYNCHRONES[0].split('*')[1] in FINAL_STATE:
@@ -340,9 +340,10 @@ NB_INITIAL_STATE,INITIAL_STATE,NB_FINAL_STATE,FINAL_STATE,NB_TRANSITIONS,TRANSIT
 print('\n')
 
 ##### body #####
-print("STANDARD:", est_un_automate_standard())
-standardisation()
-print("STANDARD APRÈS STANDARDISATION: ", est_un_automate_standard())
+
+#print("STANDARD:", est_un_automate_standard())
+#standardisation()
+#print("STANDARD APRÈS STANDARDISATION: ", est_un_automate_standard())
 #afficher_automate()
 
 print(est_un_automate_assynchrone())
@@ -350,13 +351,13 @@ print(est_un_automate_assynchrone())
 if ASYNCHRONES: # elimination_epsilon
     elimination_epsilon()
 
-'''
+
 completion()
 
-print(FINAL_STATE)
+#print(FINAL_STATE)
 automate_complementaire()
-print(FINAL_STATE)
-'''
+#print(FINAL_STATE)
+
 # determinisation_synchrone()
 
 ecriture_automate_sur_fichier()
